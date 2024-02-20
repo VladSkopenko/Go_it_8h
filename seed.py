@@ -30,7 +30,3 @@ def load_quotes():
                 print(f"Author '{author_name}' not found.")
 
 
-
-if __name__ == "__main__":
-    load_authors()
-    load_quotes()
