@@ -1,21 +1,21 @@
-from typing import  Any
-
+from typing import Any
+import re
+from decorator_table import table_for_data
+from colorama import Fore, Style
 from connect import Author, Quote
 from mongoengine import connect
 from password import user, password
 from redis import StrictRedis
 from redis_lru import RedisLRU
-from colorama import Fore, Style
-from tabulate import tabulate
-import re
+
 
 connect(db="web_19", host=f"mongodb+srv://{user}:{password}@goitlearn.x6ks5fo.mongodb.net/?retryWrites=true&w=majority")
 client = StrictRedis(host="localhost", port=6379, password=None)
 cache = RedisLRU(client)
 
-
+@table_for_data
 @cache
-def find_by_name_of_author(name: str) -> list[Any] | str:
+def find_by_name_of_author(name: str) -> list[Any, ...] | str:
     author = Author.objects(fullname=name).first()
     if author:
         quotes = Quote.objects(author=author)
@@ -23,7 +23,7 @@ def find_by_name_of_author(name: str) -> list[Any] | str:
     else:
         return "Не знайдено"
 
-
+@table_for_data
 @cache
 def find_by_tag(tag: str) -> list[Any] | str:
     quotes = Quote.objects(tags=tag)
@@ -32,8 +32,7 @@ def find_by_tag(tag: str) -> list[Any] | str:
         return data
     else:
         return "Не знайдено"
-
-
+@table_for_data
 @cache
 def find_by_tags(tags: str)-> list[Any] | str:
     tags_list = tags.split(',')
@@ -53,44 +52,23 @@ def main():
             return None
 
         elif "name" in command:
-            try:
-                name_aut = command.split(":")[1].strip()
+            name_aut = command.split(":")[1].strip()
 
-                if re.match("st", name_aut, re.IGNORECASE):
-                    data = find_by_name_of_author("Steve Martin")
-                else:
-                    data = find_by_name_of_author(name_aut)
-
-                table_data = [[d['_id'], d['quote'], ', '.join(d['tags'])] for d in data]
-                headers = ['ID', 'Quote', 'Tags']
-                table = tabulate(table_data, headers=headers)
-                print(Fore.RED + table)
-            except TypeError:
-                print(Fore.YELLOW + "Что то не то ввел, давай по новой ")
+            if re.match("st", name_aut, re.IGNORECASE):
+                find_by_name_of_author("Steve Martin")
+            else:
+                find_by_name_of_author(name_aut)
 
         elif "tags" in command:
             tags_aut = command.split(":")[1]
-            data = find_by_tags(tags_aut.strip())
-            table_data = [[d['_id'], d['quote'], ', '.join(d['tags'])] for d in data]
-            headers = ['ID', 'Quote', 'Tags']
-            table = tabulate(table_data, headers=headers)
-            print(Fore.RED + table)
+            find_by_tags(tags_aut.strip())
 
         elif "tag" in command:
-            try:
-                tag_aut = command.split(":")[1]
-                if re.match("li", tag_aut, re.IGNORECASE):
-                    data = find_by_tag("life")
-                else:
-                    data = find_by_tag(tag_aut.strip())
-                table_data = [[d['_id'], d['quote'], ', '.join(d['tags'])] for d in data]
-                headers = ['ID', 'Quote', 'Tags']
-                table = tabulate(table_data, headers=headers)
-                print(Fore.RED + table)
-            except TypeError:
-                print(Fore.YELLOW + "Что то не то ввел, давай по новой ")
-        else:
-            continue
+            tag_aut = command.split(":")[1]
+            if re.match("li", tag_aut, re.IGNORECASE):
+                find_by_tag("life")
+            else:
+                find_by_tag(tag_aut.strip())
 
 
 if __name__ == "__main__":

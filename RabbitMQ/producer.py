@@ -14,7 +14,7 @@ def main():
     channel.queue_declare(queue='email_queue')
     channel.queue_declare(queue='sms_queue')
 
-    for _ in range(15):
+    for _ in range(10000):
         full_name = fake.name()
         email = fake.email()
         phone_number = fake.phone_number()
